@@ -1,21 +1,74 @@
+
 import { Language } from './types';
 
-// The existing constants are preserved
+// Supabase Configuration
 export const SUPABASE_URL = 'https://xscdwdnjujpkczfhqrgu.supabase.co';
 export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzY2R3ZG5qdWpwa2N6Zmhxcmd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzMzEwNjgsImV4cCI6MjA3NjkwNzA2OH0.xuVAkWA5y1oDW_jC52I8JJXF-ovU-5LIBsY9yXzy6cA';
 
+/**
+ * Model and Voice Defaults
+ */
+export const DEFAULT_LIVE_API_MODEL = 'gemini-2.5-flash-native-audio-preview-09-2025';
+export const DEFAULT_VOICE = 'Zephyr';
+
+export const AVAILABLE_VOICES = [
+  'Zephyr', 'Puck', 'Charon', 'Luna', 'Nova', 'Kore', 'Fenrir', 'Leda', 'Orus',
+  'Aoede', 'Callirrhoe', 'Autonoe', 'Enceladus', 'Iapetus', 'Umbriel', 'Algieba',
+  'Despina', 'Erinome', 'Algenib', 'Rasalgethi', 'Laomedeia', 'Achernar',
+  'Alnilam', 'Schedar', 'Gacrux', 'Pulcherrima', 'Achird', 'Zubenelgenubi',
+  'Vindemiatrix', 'Sadachbia', 'Sadaltager', 'Sulafat'
+];
+
+/**
+ * Mapping Aliases to Supported Gemini Base Voices
+ * Since the API supports: Zephyr, Puck, Charon, Kore, Fenrir
+ * We distribute the requested aliases to provide distinct vocal characteristics.
+ */
 export const GREEK_VOICES = [
-  { id: 'Zephyr', name: 'Minos (King of Crete)' },
-  { id: 'Puck', name: 'Alexander (King of Macedon)' },
-  { id: 'Charon', name: 'Leonidas (King of Sparta)' },
-  { id: 'Kore', name: 'Olympias (Queen of Macedon)' },
-  { id: 'Fenrir', name: 'Agamemnon (King of Mycenae)' },
+  // Zephyr Group (Neutral/Balanced)
+  { id: 'Zephyr', name: 'Zephyr (The Wind)' },
+  { id: 'Zephyr', name: 'Luna (The Moon)' },
+  { id: 'Zephyr', name: 'Nova (The Star)' },
+  { id: 'Zephyr', name: 'Aoede (The Muse of Song)' },
+  { id: 'Zephyr', name: 'Autonoe (The High-Minded)' },
+  { id: 'Zephyr', name: 'Algieba (The Lion\'s Mane)' },
+  { id: 'Zephyr', name: 'Achernar (The River\'s End)' },
+  { id: 'Zephyr', name: 'Pulcherrima (The Fairest)' },
+  { id: 'Zephyr', name: 'Sadaltager (The Merchant\'s Luck)' },
+
+  // Kore Group (Female/Clear/Soft)
+  { id: 'Kore', name: 'Kore (The Maiden)' },
+  { id: 'Kore', name: 'Leda (The Queen)' },
+  { id: 'Kore', name: 'Callirrhoe (Beautiful Flow)' },
+  { id: 'Kore', name: 'Despina (The Mistress)' },
+  { id: 'Kore', name: 'Erinome (The Virtuous)' },
+  { id: 'Kore', name: 'Laomedeia (Leader of Folk)' },
+  { id: 'Kore', name: 'Schedar (The Breast)' },
+  { id: 'Kore', name: 'Gacrux (The Cross)' },
+  { id: 'Kore', name: 'Vindemiatrix (The Grape-Gatherer)' },
+  { id: 'Kore', name: 'Sadachbia (The Lucky Star)' },
+
+  // Puck Group (Youthful/Energetic/Bright)
+  { id: 'Puck', name: 'Puck (The Sprite)' },
+  { id: 'Puck', name: 'Orus (The Visionary)' },
+  { id: 'Puck', name: 'Enceladus (The Giant)' },
+  { id: 'Puck', name: 'Algenib (The Side)' },
+  { id: 'Puck', name: 'Alnilam (The String of Pearls)' },
+  { id: 'Puck', name: 'Achird (The Eternal)' },
+
+  // Charon Group (Deep/Steady/Mature)
+  { id: 'Charon', name: 'Charon (The Ferryman)' },
+  { id: 'Charon', name: 'Iapetus (The Piercer)' },
+  { id: 'Charon', name: 'Umbriel (The Shadow)' },
+  { id: 'Charon', name: 'Zubenelgenubi (The Southern Claw)' },
+
+  // Fenrir Group (Authoritative/Deep/Gravelly)
+  { id: 'Fenrir', name: 'Fenrir (The Wolf)' },
+  { id: 'Fenrir', name: 'Sulafat (The Tortoise)' },
+  { id: 'Fenrir', name: 'Rasalgethi (The Kneeler\'s Head)' },
 ];
 
 export const LANGUAGES: Language[] = [
-  // =========================================================================
-  // GLOBAL MAJOR LANGUAGES (Original List Maintained + World's Most Spoken)
-  // =========================================================================
   { code: 'en', name: 'English' },
   { code: 'es', name: 'Spanish' },
   { code: 'fr', name: 'French' },
@@ -39,8 +92,6 @@ export const LANGUAGES: Language[] = [
   { code: 'fa', name: 'Persian (Farsi)' },
   { code: 'he', name: 'Hebrew' },
   { code: 'el', name: 'Greek' },
-
-  // New Major Global Languages
   { code: 'bn', name: 'Bengali' },
   { code: 'jv', name: 'Javanese' },
   { code: 'pa', name: 'Punjabi' },
@@ -58,138 +109,106 @@ export const LANGUAGES: Language[] = [
   { code: 'si', name: 'Sinhala' },
   { code: 'hy', name: 'Armenian' },
   { code: 'ka', name: 'Georgian' },
-
-  // =========================================================================
-  // CHINESE VARIETIES (Sinitic Languages)
-  // =========================================================================
-  { code: 'zh-yue', name: 'Yue Chinese (Cantonese)' }, // Most famous is Cantonese
+  { code: 'zh-yue', name: 'Yue Chinese (Cantonese)' },
   { code: 'wuu', name: 'Wu Chinese (Shanghainese)' },
   { code: 'min', name: 'Min Chinese (Hokkien, Taiwanese)' },
   { code: 'hak', name: 'Hakka Chinese' },
   { code: 'zh-sw', name: 'Southwestern Mandarin (Sichuanese)' },
-
-  // =========================================================================
-  // ARABIC DIALECTS
-  // =========================================================================
   { code: 'arz', name: 'Arabic (Egyptian Dialect)' },
   { code: 'apc', name: 'Arabic (Levantine Dialect)' },
   { code: 'ary', name: 'Arabic (Moroccan Dialect / Darija)' },
   { code: 'arq', name: 'Arabic (Algerian Dialect)' },
   { code: 'afb', name: 'Arabic (Gulf Dialect)' },
   { code: 'mt', name: 'Maltese (Semitic Language)' },
-
-  // =========================================================================
-  // FRENCH REGIONAL VARIETIES (Including requested Belgian French)
-  // =========================================================================
-  { code: 'fr-be', name: 'French (Belgian)' }, // French Belgium
+  { code: 'fr-be', name: 'French (Belgian)' },
   { code: 'fr-ch', name: 'French (Swiss)' },
   { code: 'fr-qc', name: 'French (Quebec / Canadian)' },
   { code: 'fr-ivc', name: 'Ivorian French' },
-
-  // =========================================================================
-  // DUTCH DIALECTS AND REGIONAL LANGUAGES (Comprehensive)
-  // =========================================================================
-  { code: 'nl-be', name: 'Flemish (Belgian Dutch)' }, // Original
-  { code: 'af', name: 'Afrikaans' }, // Original
-  { code: 'fy', name: 'West Frisian' }, // Separate recognized language
-  { code: 'li', name: 'Limburgish' }, // Recognized regional language
-  { code: 'nds', name: 'Dutch Low Saxon (Nedersaksisch)' }, // Recognized regional language
+  { code: 'nl-be', name: 'Flemish (Belgian Dutch)' },
+  { code: 'af', name: 'Afrikaans' },
+  { code: 'fy', name: 'West Frisian' },
+  { code: 'li', name: 'Limburgish' },
+  { code: 'nds', name: 'Dutch Low Saxon (Nedersaksisch)' },
   { code: 'zea', name: 'Zeelandic (Zeêuws)' },
   { code: 'nl-brb', name: 'Brabantian Dialect' },
   { code: 'nl-hol', name: 'Hollandic Dialect' },
-
-  // =========================================================================
-  // PHILIPPINES MAJOR LANGUAGES & DIALECTS (Most Major Dialects + Mixes)
-  // =========================================================================
-  { code: 'tl', name: 'Filipino (Tagalog)' }, // Original
-  { code: 'en-tl', name: 'Taglish (Tagalog-English Mix)' }, // Tagalog English Mix
+  { code: 'tl', name: 'Filipino (Tagalog)' },
+  { code: 'en-tl', name: 'Taglish (Tagalog-English Mix)' },
   { code: 'en-ceb', name: 'Bislish (Cebuano-English Mix)' },
-  { code: 'ceb', name: 'Cebuano (Bisaya)' }, // Original
-  { code: 'ilo', name: 'Ilocano' }, // Original
-  { code: 'hil', name: 'Hiligaynon (Ilonggo)' }, // Original
-  { code: 'war', name: 'Waray-Waray' }, // Original
-  { code: 'pam', name: 'Kapampangan' }, // Original
-  { code: 'pag', name: 'Pangasinan' }, // Original
-  { code: 'bik', name: 'Bicolano (Central)' }, // Original
-  { code: 'cbk', name: 'Chavacano (Spanish Creole)' }, // Original
-  { code: 'mag', name: 'Maguindanaon' }, // Original
-  { code: 'tsg', name: 'Tausug' }, // Original
-  { code: 'mrw', name: 'Maranao' }, // Original
-  { code: 'sur', name: 'Surigaonon' }, // Original
-  { code: 'kya', name: 'Kinaray-a' }, // Original
+  { code: 'ceb', name: 'Cebuano (Bisaya)' },
+  { code: 'ilo', name: 'Ilocano' },
+  { code: 'hil', name: 'Hiligaynon (Ilonggo)' },
+  { code: 'war', name: 'Waray-Waray' },
+  { code: 'pam', name: 'Kapampangan' },
+  { code: 'pag', name: 'Pangasinan' },
+  { code: 'bik', name: 'Bicolano (Central)' },
+  { code: 'cbk', name: 'Chavacano (Spanish Creole)' },
+  { code: 'mag', name: 'Maguindanaon' },
+  { code: 'tsg', name: 'Tausug' },
+  { code: 'mrw', name: 'Maranao' },
+  { code: 'sur', name: 'Surigaonon' },
+  { code: 'kya', name: 'Kinaray-a' },
   { code: 'akl', name: 'Aklanon' },
   { code: 'mas', name: 'Masbateño' },
   { code: 'ron', name: 'Romblomanon' },
   { code: 'sbl', name: 'Sambal' },
-
-  // =========================================================================
-  // CAMEROON REGIONAL LANGUAGES & DIALECTS (Medumba + Major Groups)
-  // =========================================================================
-  { code: 'cm-fr', name: 'Cameroon French' }, // Original
-  { code: 'cm-en', name: 'Cameroon English' }, // Original
+  { code: 'cm-fr', name: 'Cameroon French' },
+  { code: 'cm-en', name: 'Cameroon English' },
   { code: 'cm-pid', name: 'Cameroonian Pidgin English (Kamtok)' },
   { code: 'cm-mix', name: 'Camfranglais (Youth Mix)' },
-  { code: 'byv', name: 'Medumba' }, // Requested: Medumba (ISO for Byangom, a Bamiléké language)
-  { code: 'dua', name: 'Duala' }, // Original
-  { code: 'ewo', name: 'Ewondo' }, // Original
-  { code: 'bam', name: 'Bamum' }, // Original
-  { code: 'ful', name: 'Fulfulde (Pulaar) - North' }, // Original
-  { code: 'bul', name: 'Bulu' }, // Original
-  { code: 'bbj', name: 'Ghomala\'' }, // Original (Major Bamileke)
+  { code: 'byv', name: 'Medumba' },
+  { code: 'dua', name: 'Duala' },
+  { code: 'ewo', name: 'Ewondo' },
+  { code: 'bam', name: 'Bamum' },
+  { code: 'ful', name: 'Fulfulde (Pulaar) - North' },
+  { code: 'bul', name: 'Bulu' },
+  { code: 'bbj', name: 'Ghomala\'' },
   { code: 'bas', name: 'Basaa' },
   { code: 'lmb', name: 'Limbum' },
   { code: 'baf', name: 'Bamileke-Fe’fe’' },
   { code: 'kff', name: 'Kom' },
-
-  // =========================================================================
-  // IVORY COAST (Côte d'Ivoire) REGIONAL LANGUAGES (All Major Dialects + Slang)
-  // =========================================================================
-  { code: 'nci', name: 'Nouchi (Ivory Coast Slang Mix)' }, // Slang/Creole
-  { code: 'bci', name: 'Baoulé' }, // Original
-  { code: 'dyu', name: 'Dioula (Jula) - Lingua Franca' }, // Original
-  { code: 'bet', name: 'Bété' }, // Original
-  { code: 'sef', name: 'Senoufo (Cebaara)' }, // Original
-  { code: 'any', name: 'Agni (Anyin)' }, // Original
-  { code: 'dnj', name: 'Yacouba (Dan)' }, // Original
-  { code: 'wec', name: 'Guéré (Wè)' }, // Original
-  { code: 'did', name: 'Dida' }, // Original
-  { code: 'abi', name: 'Abbey' }, // Original
-  { code: 'ati', name: 'Attié' }, // Original
-  { code: 'nzi', name: 'Nzima' }, // Original
-  { code: 'kro', name: 'Krou' }, // Original
+  { code: 'nci', name: 'Nouchi (Ivory Coast Slang Mix)' },
+  { code: 'bci', name: 'Baoulé' },
+  { code: 'dyu', name: 'Dioula (Jula) - Lingua Franca' },
+  { code: 'bet', name: 'Bété' },
+  { code: 'sef', name: 'Senoufo (Cebaara)' },
+  { code: 'any', name: 'Agni (Anyin)' },
+  { code: 'dnj', name: 'Yacouba (Dan)' },
+  { code: 'wec', name: 'Guéré (Wè)' },
+  { code: 'did', name: 'Dida' },
+  { code: 'abi', name: 'Abbey' },
+  { code: 'ati', name: 'Attié' },
+  { code: 'nzi', name: 'Nzima' },
+  { code: 'kro', name: 'Krou' },
   { code: 'goa', name: 'Gouro' },
   { code: 'ebr', name: 'Ebrié' },
   { code: 'adj', name: 'Adioukrou' },
   { code: 'abr', name: 'Abron' },
-
-  // =========================================================================
-  // AFRICA & OTHER REGIONS (Expanded)
-  // =========================================================================
-  { code: 'sw', name: 'Swahili' }, // Original
-  { code: 'yo', name: 'Yoruba' }, // Original
-  { code: 'ig', name: 'Igbo' }, // Original
-  { code: 'zu', name: 'Zulu' }, // Original
-  { code: 'xh', name: 'Xhosa' }, // Original
-  { code: 'am', name: 'Amharic' }, // Original
-  { code: 'ha', name: 'Hausa' }, // Original
-  { code: 'uk', name: 'Ukrainian' }, // Original
-  { code: 'ro', name: 'Romanian' }, // Original
-  { code: 'hu', name: 'Hungarian' }, // Original
-  { code: 'cs', name: 'Czech' }, // Original
-  { code: 'sk', name: 'Slovak' }, // Original
-  { code: 'bg', name: 'Bulgarian' }, // Original
-  { code: 'hr', name: 'Croatian' }, // Original
-  { code: 'sr', name: 'Serbian' }, // Original
-  { code: 'fi', name: 'Finnish' }, // Original
-  { code: 'no', name: 'Norwegian (Bokmål)' }, // Original
+  { code: 'sw', name: 'Swahili' },
+  { code: 'yo', name: 'Yoruba' },
+  { code: 'ig', name: 'Igbo' },
+  { code: 'zu', name: 'Zulu' },
+  { code: 'xh', name: 'Xhosa' },
+  { code: 'am', name: 'Amharic' },
+  { code: 'ha', name: 'Hausa' },
+  { code: 'uk', name: 'Ukrainian' },
+  { code: 'ro', name: 'Romanian' },
+  { code: 'hu', name: 'Hungarian' },
+  { code: 'cs', name: 'Czech' },
+  { code: 'sk', name: 'Slovak' },
+  { code: 'bg', name: 'Bulgarian' },
+  { code: 'hr', name: 'Croatian' },
+  { code: 'sr', name: 'Serbian' },
+  { code: 'fi', name: 'Finnish' },
+  { code: 'no', name: 'Norwegian (Bokmål)' },
   { code: 'nn', name: 'Norwegian (Nynorsk)' },
-  { code: 'da', name: 'Danish' }, // Original
+  { code: 'da', name: 'Danish' },
   { code: 'sn', name: 'Shona' },
   { code: 'mg', name: 'Malagasy' },
   { code: 'wo', name: 'Wolof' },
-  { code: 'qu', name: 'Quechua (South American Indigenous)' }, // Major indigenous
-  { code: 'grn', name: 'Guaraní (Paraguay Indigenous)' }, // Major indigenous
-  { code: 'ay', name: 'Aymara' }, // Major indigenous
+  { code: 'qu', name: 'Quechua (South American Indigenous)' },
+  { code: 'grn', name: 'Guaraní (Paraguay Indigenous)' },
+  { code: 'ay', name: 'Aymara' },
   { code: 'is', name: 'Icelandic' },
   { code: 'ga', name: 'Irish (Gaelic)' },
   { code: 'et', name: 'Estonian' },

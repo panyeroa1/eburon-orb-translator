@@ -5,7 +5,8 @@ import {
   POLLING_INTERVAL_MIN,
   POLLING_INTERVAL_MAX,
   LANGUAGES as FALLBACK_LANGUAGES,
-  GREEK_VOICES as FALLBACK_VOICES
+  GREEK_VOICES as FALLBACK_VOICES,
+  DEFAULT_VOICE
 } from './constants';
 import { useDraggable } from './hooks/useDraggable';
 import Orb from './components/Orb';
@@ -51,7 +52,7 @@ const App: React.FC = () => {
     queryParams.get('lang') || localStorage.getItem('orb_lang') || 'en-tl'
   );
   const [selectedVoice, setSelectedVoice] = useState(() => 
-    queryParams.get('voice') || localStorage.getItem('orb_voice') || 'Zephyr'
+    queryParams.get('voice') || localStorage.getItem('orb_voice') || DEFAULT_VOICE
   );
   const [meetingId, setMeetingId] = useState(() => 
     queryParams.get('id') || localStorage.getItem('orb_meeting_id') || '43f847a2-6836-4d5f-b16e-bf67f12972e5'
@@ -339,7 +340,7 @@ const App: React.FC = () => {
                   <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Voice Synthesis</label>
                     <select value={selectedVoice} onChange={e => setSelectedVoice(e.target.value)} className="w-full bg-slate-900/80 border border-white/20 rounded-2xl px-5 py-4 text-xs appearance-none cursor-pointer outline-none focus:border-cyan-500">
-                      {availableVoices.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                      {availableVoices.map((v, i) => <option key={`${v.id}-${i}`} value={v.id}>{v.name}</option>)}
                     </select>
                   </div>
                 </div>

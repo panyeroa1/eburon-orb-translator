@@ -1,6 +1,7 @@
 
 import { GoogleGenAI, Modality } from "@google/genai";
 import { decode, decodeAudioData } from "./audioUtils";
+import { DEFAULT_LIVE_API_MODEL } from "../constants";
 
 export interface LiveServiceCallbacks {
   onTranscription: (text: string) => void;
@@ -138,7 +139,7 @@ export class GeminiLiveService {
       const fullPrompt = `${SYSTEM_PROMPT_PREFIX}${targetLanguage}. INPUT TEXT: "${text}"`;
 
       const response = await this.ai.models.generateContent({
-        model: 'gemini-2.5-flash-preview-tts',
+        model: DEFAULT_LIVE_API_MODEL,
         contents: [{ parts: [{ text: fullPrompt }] }],
         config: {
           responseModalities: [Modality.AUDIO],
