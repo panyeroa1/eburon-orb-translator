@@ -17,7 +17,7 @@ import {
   addOrbitKey
 } from './services/supabaseService';
 
-const DEFAULT_TEST_TEXT = `Welcome to Orbit, the real-time translation and voice experience developed under the Success Class by Eburon initiative.
+const DEFAULT_TEST_TEXT = `Welcome to Success Class by Orbit, the real-time translation and voice experience developed under the Success Class by Eburon initiative.
 This platform is designed to remove language barriers without changing meaning, emotion, or intent.
 Every word you hear must remain faithful to the original message.
 No simplification. No censorship. No loss of tone.
@@ -51,9 +51,17 @@ const App: React.FC = () => {
   const [selectedLanguage, setSelectedLanguage] = useState(() => 
     queryParams.get('lang') || localStorage.getItem('orb_lang') || 'en-tl'
   );
+  
+  // Find the initial voice mapping based on the default name 'Orus'
+  const initialVoiceId = useMemo(() => {
+    const found = FALLBACK_VOICES.find(v => v.name.includes(DEFAULT_VOICE));
+    return found ? found.id : 'Puck';
+  }, []);
+
   const [selectedVoice, setSelectedVoice] = useState(() => 
-    queryParams.get('voice') || localStorage.getItem('orb_voice') || DEFAULT_VOICE
+    queryParams.get('voice') || localStorage.getItem('orb_voice') || initialVoiceId
   );
+  
   const [meetingId, setMeetingId] = useState(() => 
     queryParams.get('id') || localStorage.getItem('orb_meeting_id') || '43f847a2-6836-4d5f-b16e-bf67f12972e5'
   );

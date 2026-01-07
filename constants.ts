@@ -9,7 +9,7 @@ export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
  * Model and Voice Defaults
  */
 export const DEFAULT_LIVE_API_MODEL = 'gemini-2.5-flash-native-audio-preview-09-2025';
-export const DEFAULT_VOICE = 'Zephyr';
+export const DEFAULT_VOICE = 'Orus';
 
 export const AVAILABLE_VOICES = [
   'Zephyr', 'Puck', 'Charon', 'Luna', 'Nova', 'Kore', 'Fenrir', 'Leda', 'Orus',
@@ -20,52 +20,51 @@ export const AVAILABLE_VOICES = [
 ];
 
 /**
- * Mapping Aliases to Supported Gemini Base Voices
- * Since the API supports: Zephyr, Puck, Charon, Kore, Fenrir
- * We distribute the requested aliases to provide distinct vocal characteristics.
+ * Mapping Royal Aliases to Supported Gemini Base Voices
+ * Using Greek Kings and Queens titles for the requested names.
  */
 export const GREEK_VOICES = [
+  // Puck Group (Youthful/Bright) - Including Default ORUS
+  { id: 'Puck', name: 'King Orus (The Visionary)' },
+  { id: 'Puck', name: 'King Puck (The Sprite)' },
+  { id: 'Puck', name: 'King Enceladus (The Giant)' },
+  { id: 'Puck', name: 'King Alnilam (String of Pearls)' },
+  { id: 'Puck', name: 'King Algenib (The Wing)' },
+  { id: 'Puck', name: 'King Achird (The Eternal)' },
+
   // Zephyr Group (Neutral/Balanced)
-  { id: 'Zephyr', name: 'Zephyr (The Wind)' },
-  { id: 'Zephyr', name: 'Luna (The Moon)' },
-  { id: 'Zephyr', name: 'Nova (The Star)' },
-  { id: 'Zephyr', name: 'Aoede (The Muse of Song)' },
-  { id: 'Zephyr', name: 'Autonoe (The High-Minded)' },
-  { id: 'Zephyr', name: 'Algieba (The Lion\'s Mane)' },
-  { id: 'Zephyr', name: 'Achernar (The River\'s End)' },
-  { id: 'Zephyr', name: 'Pulcherrima (The Fairest)' },
-  { id: 'Zephyr', name: 'Sadaltager (The Merchant\'s Luck)' },
+  { id: 'Zephyr', name: 'King Zephyr (The Wind)' },
+  { id: 'Queen Luna', name: 'Queen Luna (The Moon)' },
+  { id: 'Zephyr', name: 'Queen Nova (The Star)' },
+  { id: 'Zephyr', name: 'Queen Aoede (The Songstress)' },
+  { id: 'Zephyr', name: 'Queen Autonoe (High-Minded)' },
+  { id: 'Zephyr', name: 'Queen Algieba (The Lioness)' },
+  { id: 'Zephyr', name: 'King Achernar (The River King)' },
+  { id: 'Zephyr', name: 'Queen Pulcherrima (The Fairest)' },
+  { id: 'Zephyr', name: 'King Sadaltager (The Merchant)' },
 
-  // Kore Group (Female/Clear/Soft)
-  { id: 'Kore', name: 'Kore (The Maiden)' },
-  { id: 'Kore', name: 'Leda (The Queen)' },
-  { id: 'Kore', name: 'Callirrhoe (Beautiful Flow)' },
-  { id: 'Kore', name: 'Despina (The Mistress)' },
-  { id: 'Kore', name: 'Erinome (The Virtuous)' },
-  { id: 'Kore', name: 'Laomedeia (Leader of Folk)' },
-  { id: 'Kore', name: 'Schedar (The Breast)' },
-  { id: 'Kore', name: 'Gacrux (The Cross)' },
-  { id: 'Kore', name: 'Vindemiatrix (The Grape-Gatherer)' },
-  { id: 'Kore', name: 'Sadachbia (The Lucky Star)' },
+  // Kore Group (Female/Soft/Clear)
+  { id: 'Kore', name: 'Queen Kore (The Maiden)' },
+  { id: 'Kore', name: 'Queen Leda (The Swan Queen)' },
+  { id: 'Kore', name: 'Queen Callirrhoe (Beautiful Flow)' },
+  { id: 'Kore', name: 'Queen Despina (The Mistress)' },
+  { id: 'Kore', name: 'Queen Erinome (The Virtuous)' },
+  { id: 'Kore', name: 'Queen Laomedeia (Folk Leader)' },
+  { id: 'Kore', name: 'Queen Schedar (The Radiant)' },
+  { id: 'Kore', name: 'Queen Gacrux (The Cross)' },
+  { id: 'Kore', name: 'Queen Vindemiatrix (The Harvester)' },
+  { id: 'Kore', name: 'Queen Sadachbia (The Lucky)' },
 
-  // Puck Group (Youthful/Energetic/Bright)
-  { id: 'Puck', name: 'Puck (The Sprite)' },
-  { id: 'Puck', name: 'Orus (The Visionary)' },
-  { id: 'Puck', name: 'Enceladus (The Giant)' },
-  { id: 'Puck', name: 'Algenib (The Side)' },
-  { id: 'Puck', name: 'Alnilam (The String of Pearls)' },
-  { id: 'Puck', name: 'Achird (The Eternal)' },
+  // Charon Group (Deep/Mature)
+  { id: 'Charon', name: 'King Charon (The Ferryman)' },
+  { id: 'Charon', name: 'King Iapetus (The Piercer)' },
+  { id: 'Charon', name: 'King Umbriel (The Shadow)' },
+  { id: 'Charon', name: 'King Zubenelgenubi (The Southern)' },
 
-  // Charon Group (Deep/Steady/Mature)
-  { id: 'Charon', name: 'Charon (The Ferryman)' },
-  { id: 'Charon', name: 'Iapetus (The Piercer)' },
-  { id: 'Charon', name: 'Umbriel (The Shadow)' },
-  { id: 'Charon', name: 'Zubenelgenubi (The Southern Claw)' },
-
-  // Fenrir Group (Authoritative/Deep/Gravelly)
-  { id: 'Fenrir', name: 'Fenrir (The Wolf)' },
-  { id: 'Fenrir', name: 'Sulafat (The Tortoise)' },
-  { id: 'Fenrir', name: 'Rasalgethi (The Kneeler\'s Head)' },
+  // Fenrir Group (Authoritative/Deep)
+  { id: 'Fenrir', name: 'King Fenrir (The Wolf)' },
+  { id: 'Fenrir', name: 'King Rasalgethi (The Kneeler)' },
+  { id: 'Fenrir', name: 'Queen Sulafat (The Steady)' },
 ];
 
 export const LANGUAGES: Language[] = [
