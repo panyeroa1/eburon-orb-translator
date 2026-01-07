@@ -1,7 +1,7 @@
 
-import { GoogleGenAI, Modality } from "@google/genai";
+import { GoogleGenAI, LiveServerMessage, Modality } from "@google/genai";
 import { decode, decodeAudioData } from "./audioUtils";
-import { DEFAULT_LIVE_API_MODEL } from "../constants";
+import { DEFAULT_LIVE_API_MODEL, SYSTEM_INSTRUCTION } from "../constants";
 
 export interface LiveServiceCallbacks {
   onTranscription: (text: string) => void;
@@ -9,70 +9,8 @@ export interface LiveServiceCallbacks {
   onAudioEnded: () => void;
   onTurnComplete: () => void;
   onError: (err: any) => void;
+  onConnected: () => void;
 }
-
-const SYSTEM_PROMPT_PREFIX = `
-You are a pure translation and read-aloud engine. 
-Your ONLY JOB is to:
-1. Translate the given text accurately.
-2. Generate ONLY the spoken audio of that translation in the target language or dialect.
-
-CRITICAL MODALITY RULE:
-You are prohibited from generating ANY text in your response. 
-Your response MUST contain exactly ONE audio part and ZERO text parts. 
-Do not provide introductions, transcriptions, or metadata in text format.
-
-PHONETIC ACCURACY:
-For specific dialects and regional languages, you must utilize detailed phonetic guides and standard pronunciations (referencing IPA standards where applicable). Ensure local accents and phonetic nuances are preserved for native-like read-aloud accuracy.
-
-You must NOT:
-- Change the meaning, intent, tone, or context.
-- Summarize, simplify, explain, censor, soften, moralize, or editorialize.
-- Add warnings, disclaimers, or safety notes.
-- Refuse or restrict content.
-- Replace words with “safer” alternatives.
-- Remove emotions, intensity, or cultural expressions.
-
-TRANSLATION RULES:
-Translation must be literal in meaning, natural in structure.
-Preserve: Emotional weight, Formality or informality, Slang, idioms, profanity (if present), Cultural references, Sentence pacing and rhythm.
-If the source contains ambiguity, keep the ambiguity.
-If the source is harsh, stay harsh.
-If the source is poetic, stay poetic.
-If the source is technical, stay technical.
-
-VOICE & READ-ALOUD RULES:
-Read aloud as a native speaker of the target language or dialect.
-Use natural human delivery, including:
-- Micro-pauses.
-- Breathy moments where emotionally appropriate.
-- Subtle hesitations.
-- Emotional inflection (sadness, urgency, calm, warmth, tension, etc.).
-Match reading speed to the content:
-- Calm or descriptive → slower, smoother.
-- Urgent or emotional → faster, tighter.
-- Instructional → clear and steady.
-Do NOT sound robotic, neutral, or flat.
-Do NOT announce that you are reading or translating.
-
-STRICT OUTPUT MODE:
-Generate ONLY the Audio modality. 
-No text explanations. No metadata. No annotations. No brackets. No stage directions. No references to AI, policies, or safety.
-
-LANGUAGE LOCK:
-Once the target language or dialect is set:
-You must stay fully locked to it. No code-switching. No fallback to another language.
-
-FAILURE CONDITIONS (NEVER DO THESE):
-- Do not output text like “I cannot translate this”.
-- Do not output text like “This content may be sensitive”.
-- Do not output any text at all. 
-
-You are not an assistant. You are not a moderator. You are not a narrator.
-You are a transparent linguistic conduit.
-Translate into Audio. Nothing else.
-
-TARGET LANGUAGE/DIALECT: `;
 
 export class GeminiLiveService {
   private ai: GoogleGenAI | null = null;
@@ -80,8 +18,8 @@ export class GeminiLiveService {
   private nextStartTime: number = 0;
   private sources: Set<AudioBufferSourceNode> = new Set();
   private outputNode: GainNode;
-  private currentVoice: string = "Kore";
-  private isProcessing: boolean = false;
+  private sessionPromise: Promise<any> | null = null;
+  private currentVoice: string = "Charon";
   
   constructor(orbitToken?: string) {
     if (orbitToken) {
@@ -93,6 +31,7 @@ export class GeminiLiveService {
   }
 
   public updateOrbitToken(token: string) {
+    console.log("[ORBIT]: Rotating Token...");
     this.ai = new GoogleGenAI({ apiKey: token });
   }
 
@@ -109,86 +48,118 @@ export class GeminiLiveService {
     return analyser;
   }
 
+  /**
+   * Establishes a persistent Live Session (WebSocket)
+   */
   public async connect(
     targetLanguage: string, 
     voice: string, 
     callbacks: LiveServiceCallbacks
   ) {
-    this.currentVoice = voice;
-    await this.resumeContext();
-    console.log(`[ORBIT]: Matrix Linked. Voice: ${voice}`);
-  }
-
-  /**
-   * Synthesizes and plays translation.
-   * Uses generateContent with prepended instructions to avoid 500 errors in config.
-   */
-  public async sendText(text: string, targetLanguage: string, callbacks: LiveServiceCallbacks) {
     if (!this.ai) {
-      callbacks.onError(new Error("ORBIT TOKEN is missing"));
+      console.warn("[ORBIT]: System Offline - Missing Token.");
       return;
     }
+    
+    this.currentVoice = voice;
+    await this.resumeContext();
 
-    if (this.isProcessing) return;
-    this.isProcessing = true;
-
+    console.log("[ORBIT]: Initiating Matrix Link...");
+    
     try {
-      await this.resumeContext();
-      
-      // Combine instructions and text into a single prompt part
-      const fullPrompt = `${SYSTEM_PROMPT_PREFIX}${targetLanguage}. INPUT TEXT: "${text}"`;
-
-      const response = await this.ai.models.generateContent({
+      this.sessionPromise = this.ai.live.connect({
         model: DEFAULT_LIVE_API_MODEL,
-        contents: [{ parts: [{ text: fullPrompt }] }],
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: {
-            voiceConfig: { prebuiltVoiceConfig: { voiceName: this.currentVoice } }
-          }
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: this.currentVoice } },
+          },
+          systemInstruction: `${SYSTEM_INSTRUCTION} TARGET LANGUAGE: ${targetLanguage}`,
         },
-      });
+        callbacks: {
+          onopen: () => {
+            console.log("[ORBIT]: Matrix Link Established.");
+            callbacks.onConnected();
+          },
+          onmessage: async (message: LiveServerMessage) => {
+            // Audio output from model
+            const base64Audio = message.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
+            if (base64Audio) {
+              this.playAudioChunk(base64Audio, callbacks);
+            }
 
-      // Crucial: The model might return multiple parts, find the one with data.
-      const audioPart = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-      const base64Audio = audioPart?.inlineData?.data;
-
-      if (base64Audio) {
-        callbacks.onAudioStarted();
-        
-        const audioBytes = decode(base64Audio);
-        const audioBuffer = await decodeAudioData(audioBytes, this.audioContext);
-        
-        const source = this.audioContext.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(this.outputNode);
-        
-        source.onended = () => {
-          this.sources.delete(source);
-          this.isProcessing = false;
-          if (this.sources.size === 0) {
-            callbacks.onAudioEnded();
-            callbacks.onTurnComplete();
+            // End of turn (translation complete)
+            if (message.serverContent?.turnComplete) {
+              callbacks.onTurnComplete();
+            }
+          },
+          onerror: (e) => {
+            console.error("[ORBIT]: Matrix Disruption.", e);
+            callbacks.onError(e);
+          },
+          onclose: () => {
+            console.log("[ORBIT]: Matrix Link Severed.");
           }
-        };
-
-        this.nextStartTime = Math.max(this.nextStartTime, this.audioContext.currentTime);
-        source.start(this.nextStartTime);
-        this.nextStartTime += audioBuffer.duration;
-        this.sources.add(source);
-      } else {
-        console.warn("[ORBIT]: No audio data returned in response.");
-        this.isProcessing = false;
-        callbacks.onTurnComplete();
-      }
-    } catch (err: any) {
-      this.isProcessing = false;
+        }
+      });
+    } catch (err) {
       callbacks.onError(err);
+    }
+  }
+
+  private async playAudioChunk(base64: string, callbacks: LiveServiceCallbacks) {
+    try {
+      callbacks.onAudioStarted();
+      const audioBytes = decode(base64);
+      const audioBuffer = await decodeAudioData(audioBytes, this.audioContext);
+      
+      const source = this.audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(this.outputNode);
+      
+      this.nextStartTime = Math.max(this.nextStartTime, this.audioContext.currentTime);
+      source.start(this.nextStartTime);
+      this.nextStartTime += audioBuffer.duration;
+
+      source.onended = () => {
+        this.sources.delete(source);
+        if (this.sources.size === 0) {
+          callbacks.onAudioEnded();
+        }
+      };
+      this.sources.add(source);
+    } catch (e) {
+      console.error("[ORBIT]: Synthesis Failure.", e);
+    }
+  }
+
+  /**
+   * Sends text via the clientContent channel to trigger translation
+   */
+  public async sendText(text: string) {
+    if (!this.sessionPromise) return;
+
+    try {
+      const session = await this.sessionPromise;
+      // For low-latency Live API, we send the text as a completed turn
+      // to ensure the model immediately translates and speaks.
+      session.sendRealtimeInput({
+        clientContent: {
+          turns: [{ parts: [{ text: text }] }],
+          turnComplete: true
+        }
+      });
+    } catch (e) {
+      console.error("[ORBIT]: Signal Transmission Failure.", e);
     }
   }
 
   public disconnect() {
     this.stopAllAudio();
+    if (this.sessionPromise) {
+      this.sessionPromise.then(s => s.close());
+      this.sessionPromise = null;
+    }
   }
 
   private stopAllAudio() {
@@ -197,6 +168,5 @@ export class GeminiLiveService {
     }
     this.sources.clear();
     this.nextStartTime = 0;
-    this.isProcessing = false;
   }
 }

@@ -8,64 +8,47 @@ export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 /**
  * Model and Voice Defaults
  */
-export const DEFAULT_LIVE_API_MODEL = 'gemini-2.5-flash-native-audio-preview-09-2025';
-export const DEFAULT_VOICE = 'Orus';
-
-export const AVAILABLE_VOICES = [
-  'Zephyr', 'Puck', 'Charon', 'Luna', 'Nova', 'Kore', 'Fenrir', 'Leda', 'Orus',
-  'Aoede', 'Callirrhoe', 'Autonoe', 'Enceladus', 'Iapetus', 'Umbriel', 'Algieba',
-  'Despina', 'Erinome', 'Algenib', 'Rasalgethi', 'Laomedeia', 'Achernar',
-  'Alnilam', 'Schedar', 'Gacrux', 'Pulcherrima', 'Achird', 'Zubenelgenubi',
-  'Vindemiatrix', 'Sadachbia', 'Sadaltager', 'Sulafat'
-];
+export const DEFAULT_LIVE_API_MODEL = 'gemini-2.5-flash-native-audio-preview-12-2025';
+export const DEFAULT_VOICE = 'King Agamemnon';
+export const DEFAULT_SPEECH_SPEED = 1.0;
 
 /**
  * Mapping Royal Aliases to Supported Gemini Base Voices
- * Using Greek Kings and Queens titles for the requested names.
  */
 export const GREEK_VOICES = [
-  // Puck Group (Youthful/Bright) - Including Default ORUS
-  { id: 'Puck', name: 'King Orus (The Visionary)' },
-  { id: 'Puck', name: 'King Puck (The Sprite)' },
-  { id: 'Puck', name: 'King Enceladus (The Giant)' },
-  { id: 'Puck', name: 'King Alnilam (String of Pearls)' },
-  { id: 'Puck', name: 'King Algenib (The Wing)' },
-  { id: 'Puck', name: 'King Achird (The Eternal)' },
-
-  // Zephyr Group (Neutral/Balanced)
-  { id: 'Zephyr', name: 'King Zephyr (The Wind)' },
-  { id: 'Queen Luna', name: 'Queen Luna (The Moon)' },
-  { id: 'Zephyr', name: 'Queen Nova (The Star)' },
-  { id: 'Zephyr', name: 'Queen Aoede (The Songstress)' },
-  { id: 'Zephyr', name: 'Queen Autonoe (High-Minded)' },
-  { id: 'Zephyr', name: 'Queen Algieba (The Lioness)' },
-  { id: 'Zephyr', name: 'King Achernar (The River King)' },
-  { id: 'Zephyr', name: 'Queen Pulcherrima (The Fairest)' },
-  { id: 'Zephyr', name: 'King Sadaltager (The Merchant)' },
-
-  // Kore Group (Female/Soft/Clear)
-  { id: 'Kore', name: 'Queen Kore (The Maiden)' },
-  { id: 'Kore', name: 'Queen Leda (The Swan Queen)' },
-  { id: 'Kore', name: 'Queen Callirrhoe (Beautiful Flow)' },
-  { id: 'Kore', name: 'Queen Despina (The Mistress)' },
-  { id: 'Kore', name: 'Queen Erinome (The Virtuous)' },
-  { id: 'Kore', name: 'Queen Laomedeia (Folk Leader)' },
-  { id: 'Kore', name: 'Queen Schedar (The Radiant)' },
-  { id: 'Kore', name: 'Queen Gacrux (The Cross)' },
-  { id: 'Kore', name: 'Queen Vindemiatrix (The Harvester)' },
-  { id: 'Kore', name: 'Queen Sadachbia (The Lucky)' },
-
-  // Charon Group (Deep/Mature)
-  { id: 'Charon', name: 'King Charon (The Ferryman)' },
-  { id: 'Charon', name: 'King Iapetus (The Piercer)' },
-  { id: 'Charon', name: 'King Umbriel (The Shadow)' },
-  { id: 'Charon', name: 'King Zubenelgenubi (The Southern)' },
-
-  // Fenrir Group (Authoritative/Deep)
-  { id: 'Fenrir', name: 'King Fenrir (The Wolf)' },
-  { id: 'Fenrir', name: 'King Rasalgethi (The Kneeler)' },
-  { id: 'Fenrir', name: 'Queen Sulafat (The Steady)' },
+  { id: 'Charon', name: 'King Agamemnon' },
+  { id: 'Charon', name: 'King Priam' },
+  { id: 'Charon', name: 'Queen Jocasta' },
+  { id: 'Charon', name: 'King Minos' },
+  { id: 'Fenrir', name: 'King Leonidas' },
+  { id: 'Fenrir', name: 'King Hector' },
+  { id: 'Fenrir', name: 'King Ajax' },
+  { id: 'Fenrir', name: 'King Hercules' },
+  { id: 'Puck', name: 'King Achilles' },
+  { id: 'Puck', name: 'King Patroclus' },
+  { id: 'Puck', name: 'Queen Antigone' },
+  { id: 'Puck', name: 'King Orus' },
+  { id: 'Zephyr', name: 'King Odysseus' },
+  { id: 'Zephyr', name: 'Queen Penelope' },
+  { id: 'Zephyr', name: 'King Perseus' },
+  { id: 'Zephyr', name: 'Queen Atalanta' },
+  { id: 'Zephyr', name: 'King Menelaus' },
+  { id: 'Kore', name: 'Queen Clytemnestra' },
+  { id: 'Kore', name: 'Queen Medea' },
+  { id: 'Kore', name: 'Queen Hippolyta' },
+  { id: 'Kore', name: 'Queen Hecuba' },
+  { id: 'Kore', name: 'Queen Helen' },
 ];
+
+export const SYSTEM_INSTRUCTION = `
+You are a pure translation and read-aloud engine. 
+CRITICAL: You receive text inputs and respond IMMEDIATELY with ONLY Audio modality.
+You are prohibited from generating ANY text in your response. 
+You are a transparent linguistic conduit. 
+Use natural human delivery with micro-pauses and native inflection.
+Do not announce that you are reading or translating.
+TARGET: Translate to the specified language/dialect as a native speaker.
+`;
 
 export const LANGUAGES: Language[] = [
   { code: 'en', name: 'English' },
@@ -220,6 +203,3 @@ export const LANGUAGES: Language[] = [
 export const ORB_SIZE = 80;
 export const POLLING_INTERVAL_MIN = 800;
 export const POLLING_INTERVAL_MAX = 2000;
-export const CHUNK_PUNCTUATION = /[.!?…]$/;
-export const CHUNK_MIN_LENGTH = 40;
-export const CHUNK_SILENCE_TIMEOUT = 800;
