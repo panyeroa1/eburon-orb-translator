@@ -82,17 +82,17 @@ export class GeminiLiveService {
   private currentVoice: string = "Kore";
   private isProcessing: boolean = false;
   
-  constructor(apiKey?: string) {
-    if (apiKey) {
-      this.ai = new GoogleGenAI({ apiKey: apiKey });
+  constructor(orbitToken?: string) {
+    if (orbitToken) {
+      this.ai = new GoogleGenAI({ apiKey: orbitToken });
     }
     this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
     this.outputNode = this.audioContext.createGain();
     this.outputNode.connect(this.audioContext.destination);
   }
 
-  public updateApiKey(apiKey: string) {
-    this.ai = new GoogleGenAI({ apiKey: apiKey });
+  public updateOrbitToken(token: string) {
+    this.ai = new GoogleGenAI({ apiKey: token });
   }
 
   private async resumeContext() {
@@ -124,7 +124,7 @@ export class GeminiLiveService {
    */
   public async sendText(text: string, targetLanguage: string, callbacks: LiveServiceCallbacks) {
     if (!this.ai) {
-      callbacks.onError(new Error("Orbit API key is missing"));
+      callbacks.onError(new Error("ORBIT TOKEN is missing"));
       return;
     }
 
@@ -149,7 +149,6 @@ export class GeminiLiveService {
       });
 
       // Crucial: The model might return multiple parts, find the one with data.
-      // But based on the error, we must ensure it's not generating text parts at all.
       const audioPart = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
       const base64Audio = audioPart?.inlineData?.data;
 

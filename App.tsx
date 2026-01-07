@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { OrbStatus, HistoryEntry, Language } from './types';
 import {
   POLLING_INTERVAL_MIN,
@@ -32,6 +32,7 @@ const App: React.FC = () => {
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Key Rotation State
@@ -40,11 +41,21 @@ const App: React.FC = () => {
   const [newOrbitToken, setNewOrbitToken] = useState('');
   const [isAddingToken, setIsAddingToken] = useState(false);
   
+  // URL Parameter Handling
+  const queryParams = useMemo(() => new URLSearchParams(window.location.search), []);
+  
   const [availableLanguages, setAvailableLanguages] = useState<Language[]>(FALLBACK_LANGUAGES);
   const [availableVoices, setAvailableVoices] = useState<{id: string, name: string}[]>(FALLBACK_VOICES);
-  const [selectedLanguage, setSelectedLanguage] = useState(() => localStorage.getItem('orb_lang') || 'en-tl');
-  const [selectedVoice, setSelectedVoice] = useState(() => localStorage.getItem('orb_voice') || 'Orus');
-  const [meetingId, setMeetingId] = useState(() => localStorage.getItem('orb_meeting_id') || '43f847a2-6836-4d5f-b16e-bf67f12972e5');
+  
+  const [selectedLanguage, setSelectedLanguage] = useState(() => 
+    queryParams.get('lang') || localStorage.getItem('orb_lang') || 'en-tl'
+  );
+  const [selectedVoice, setSelectedVoice] = useState(() => 
+    queryParams.get('voice') || localStorage.getItem('orb_voice') || 'Zephyr'
+  );
+  const [meetingId, setMeetingId] = useState(() => 
+    queryParams.get('id') || localStorage.getItem('orb_meeting_id') || '43f847a2-6836-4d5f-b16e-bf67f12972e5'
+  );
   const [testText, setTestText] = useState(DEFAULT_TEST_TEXT);
   
   const textQueueRef = useRef<string[]>([]);
@@ -56,12 +67,24 @@ const App: React.FC = () => {
   
   const { position, isDragging, handleMouseDown: dragMouseDown } = useDraggable(100, 200);
 
+  // Generate Shareable Iframe Code
+  const shareableIframeCode = useMemo(() => {
+    const baseUrl = window.location.origin + window.location.pathname;
+    const params = new URLSearchParams();
+    if (meetingId) params.set('id', meetingId);
+    if (selectedLanguage) params.set('lang', selectedLanguage);
+    if (selectedVoice) params.set('voice', selectedVoice);
+    
+    const fullUrl = `${baseUrl}?${params.toString()}`;
+    return `<iframe src="${fullUrl}" width="200" height="200" frameborder="0" style="border:none; overflow:hidden;" allow="autoplay"></iframe>`;
+  }, [meetingId, selectedLanguage, selectedVoice]);
+
   const rotateKeyAndReconnect = useCallback(async () => {
     if (orbitKeys.length === 0) return;
     const nextIdx = (currentKeyIndex + 1) % orbitKeys.length;
     setCurrentKeyIndex(nextIdx);
     if (liveServiceRef.current) {
-      liveServiceRef.current.updateApiKey(orbitKeys[nextIdx]);
+      liveServiceRef.current.updateOrbitToken(orbitKeys[nextIdx]);
     }
   }, [orbitKeys, currentKeyIndex]);
 
@@ -69,7 +92,7 @@ const App: React.FC = () => {
     const keys = await getOrbitKeys();
     setOrbitKeys(keys);
     if (keys.length > 0 && liveServiceRef.current) {
-      liveServiceRef.current.updateApiKey(keys[0]);
+      liveServiceRef.current.updateOrbitToken(keys[0]);
     }
   }, []);
 
@@ -80,7 +103,6 @@ const App: React.FC = () => {
     if (success) {
       setNewOrbitToken('');
       await loadOrbitKeys();
-      alert("Orbit Token Injected.");
     } else {
       alert("Orbit persistence failure.");
     }
@@ -95,7 +117,6 @@ const App: React.FC = () => {
     setStatus(OrbStatus.BUFFERING);
     
     const langName = availableLanguages.find(l => l.code === selectedLanguage)?.name || 'English';
-    console.log(`[ORBIT]: Synthesizing Matrix Turn...`);
 
     const callbacks = {
       onTranscription: (text: string) => {},
@@ -104,16 +125,15 @@ const App: React.FC = () => {
       onTurnComplete: () => {
         setStatus(OrbStatus.IDLE);
         isBusyRef.current = false;
-        // Small delay to prevent overlap
         setTimeout(() => processNextInQueue(), 100);
       },
       onError: (err: any) => {
         const msg = err?.message?.toLowerCase() || "";
         if (msg.includes("429") || msg.includes("quota") || msg.includes("limit")) {
-          setErrorMessage("Orbit Limit Exceeded. Rotating...");
+          setErrorMessage("Limit Reached. Rotating...");
           rotateKeyAndReconnect();
         } else {
-          setErrorMessage("Orbit Interface Error.");
+          setErrorMessage("Interface Error.");
           console.error("[ORBIT CRITICAL]:", err);
         }
         setStatus(OrbStatus.ERROR);
@@ -137,20 +157,17 @@ const App: React.FC = () => {
       onAudioEnded: () => {},
       onTurnComplete: () => {},
       onError: (err) => {
-        setErrorMessage("Connection Error.");
+        setErrorMessage("Link Error.");
         setStatus(OrbStatus.ERROR);
       }
     });
   }, [selectedLanguage, selectedVoice]);
 
-  // Main Polling Effect
   useEffect(() => {
     if (!isMonitoring || !meetingId) {
       if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
       return;
     }
-
-    console.log(`[ORBIT]: Polling Matrix for ID: ${meetingId}`);
     
     const poll = async () => {
       const latestText = await fetchLatestTranscription(meetingId);
@@ -173,7 +190,7 @@ const App: React.FC = () => {
   const handleTestSpeech = () => {
     if (!testText.trim()) return;
     if (!isMonitoring) {
-      setErrorMessage("Orbit System Not Active.");
+      setErrorMessage("Matrix Offline.");
       setTimeout(() => setErrorMessage(null), 3000);
       return;
     }
@@ -181,11 +198,23 @@ const App: React.FC = () => {
     processNextInQueue();
   };
 
+  const copyIframeToClipboard = () => {
+    navigator.clipboard.writeText(shareableIframeCode);
+    setCopyFeedback(true);
+    setTimeout(() => setCopyFeedback(false), 2000);
+  };
+
   useEffect(() => {
     loadOrbitKeys();
     const service = new GeminiLiveService();
     liveServiceRef.current = service;
     analyserRef.current = service.getAnalyser();
+    
+    // Auto-monitor if params are present
+    if (queryParams.has('id')) {
+      setIsMonitoring(true);
+    }
+    
     return () => service.disconnect();
   }, []);
 
@@ -222,69 +251,97 @@ const App: React.FC = () => {
 
       {isSidebarOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-[60] p-4 pointer-events-none">
-          <div className="resizable-modal bg-slate-950/98 backdrop-blur-[60px] border-2 border-white/20 transform transition-all pointer-events-auto shadow-[0_40px_100px_rgba(0,0,0,0.9)] flex flex-col rounded-[2.5rem] overflow-hidden w-[440px] h-[85vh]">
+          <div className="resizable-modal bg-slate-950/98 backdrop-blur-[60px] border-2 border-white/20 transform transition-all pointer-events-auto shadow-[0_40px_100px_rgba(0,0,0,0.9)] flex flex-col rounded-[2.5rem] overflow-hidden w-[480px] h-[90vh]">
             <div className="flex justify-between items-center p-8 shrink-0 border-b border-white/10 bg-black/40">
-              <h2 className="text-2xl font-black text-cyan-400 tracking-tighter uppercase italic drop-shadow-sm">Matrix Prime</h2>
-              <button onClick={() => setIsSidebarOpen(false)} className="p-3 rounded-2xl bg-white/5 text-white/40 hover:text-white"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg></button>
+              <h2 className="text-2xl font-black text-cyan-400 tracking-tighter uppercase italic drop-shadow-sm">System Config</h2>
+              <button onClick={() => setIsSidebarOpen(false)} className="p-3 rounded-2xl bg-white/5 text-white/40 hover:text-white transition-all"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg></button>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-8 p-8 custom-scrollbar">
+              {/* Token Injector */}
               <div className="bg-slate-900/60 p-6 rounded-[2rem] border border-cyan-500/20">
-                <label className="block text-[10px] font-black text-cyan-400 uppercase tracking-[0.25em] mb-4">Add Orbit Token</label>
+                <label className="block text-[10px] font-black text-cyan-400 uppercase tracking-[0.25em] mb-4">Inject Orbit Token</label>
                 <div className="flex gap-2">
                   <input 
                     type="password" 
                     value={newOrbitToken} 
                     onChange={e => setNewOrbitToken(e.target.value)} 
-                    placeholder="Enter key..." 
-                    className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-mono outline-none focus:border-cyan-500/50 transition-all" 
+                    placeholder="Enter ORBIT TOKEN" 
+                    className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-mono outline-none focus:border-cyan-500/50 transition-all text-white" 
                   />
                   <button 
                     disabled={isAddingToken} 
                     onClick={handleAddToken} 
-                    className="bg-cyan-500 text-black px-4 py-3 rounded-xl font-black text-[10px] uppercase hover:bg-cyan-400 transition-all disabled:opacity-50"
+                    className="bg-cyan-500 text-black px-6 py-3 rounded-xl font-black text-[10px] uppercase hover:bg-cyan-400 transition-all disabled:opacity-50"
                   >
                     {isAddingToken ? '...' : 'Inject'}
                   </button>
                 </div>
-                <div className="mt-2 text-[9px] text-white/30 italic">Token Pool: {orbitKeys.length} | Slot: {currentKeyIndex + 1}</div>
+                <div className="mt-2 text-[9px] text-white/30 italic flex justify-between">
+                  <span>Tokens Pool: {orbitKeys.length}</span>
+                  <span>Active Slot: {currentKeyIndex + 1}</span>
+                </div>
               </div>
 
-              <div className="bg-purple-900/20 p-6 rounded-[2rem] border border-purple-500/30">
-                <label className="block text-[10px] font-black text-purple-400 uppercase tracking-[0.25em] mb-4">Synthesis Verification</label>
+              {/* Share Engine */}
+              <div className="bg-emerald-950/20 p-6 rounded-[2rem] border border-emerald-500/30">
+                <label className="block text-[10px] font-black text-emerald-400 uppercase tracking-[0.25em] mb-4">Deep-Link Share</label>
+                <div className="space-y-3">
+                  <div className="relative">
+                    <textarea 
+                      readOnly 
+                      value={shareableIframeCode} 
+                      className="w-full bg-black/60 border border-white/5 rounded-xl px-4 py-3 text-[10px] font-mono min-h-[80px] text-emerald-100/70 outline-none resize-none" 
+                    />
+                    <button 
+                      onClick={copyIframeToClipboard}
+                      className={`absolute bottom-3 right-3 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${copyFeedback ? 'bg-emerald-500 text-black' : 'bg-white/10 text-white/60 hover:bg-white/20'}`}
+                    >
+                      {copyFeedback ? 'Copied' : 'Copy Iframe'}
+                    </button>
+                  </div>
+                  <p className="text-[9px] text-emerald-500/50 italic text-center">Embed this specific configuration into any Success Class portal.</p>
+                </div>
+              </div>
+
+              {/* Testing Ground */}
+              <div className="bg-purple-900/10 p-6 rounded-[2rem] border border-purple-500/20">
+                <label className="block text-[10px] font-black text-purple-400 uppercase tracking-[0.25em] mb-4">Neural Testing</label>
                 <div className="space-y-3">
                   <textarea 
                     value={testText} 
                     onChange={e => setTestText(e.target.value)} 
-                    placeholder="Enter text to translate..." 
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs min-h-[120px] focus:border-purple-500/50 outline-none transition-all" 
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs min-h-[100px] focus:border-purple-500/50 outline-none transition-all text-slate-300" 
                   />
                   <button 
                     onClick={handleTestSpeech} 
-                    className="w-full bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-purple-900/40"
+                    className="w-full bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-lg"
                   >
-                    Trigger Voice Engine
+                    Pulse Signal
                   </button>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Stream ID</label>
-                <input type="text" value={meetingId} onChange={e => setMeetingId(e.target.value)} className="w-full bg-white/5 border border-white/20 rounded-2xl px-5 py-4 text-sm font-mono shadow-inner text-cyan-100 outline-none focus:border-cyan-500/50" placeholder="meeting_id" />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
+              {/* Global Settings */}
+              <div className="space-y-6">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Linguistics</label>
-                  <select value={selectedLanguage} onChange={e => setSelectedLanguage(e.target.value)} className="w-full bg-white/5 border border-white/20 rounded-2xl px-5 py-4 text-sm appearance-none cursor-pointer outline-none">
-                    {availableLanguages.map(l => <option key={l.code} value={l.code} className="bg-slate-900">{l.name}</option>)}
-                  </select>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Matrix Link ID</label>
+                  <input type="text" value={meetingId} onChange={e => setMeetingId(e.target.value)} className="w-full bg-white/5 border border-white/20 rounded-2xl px-5 py-4 text-sm font-mono shadow-inner text-cyan-100 outline-none focus:border-cyan-500/50" placeholder="UUID Required" />
                 </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Synthesizer</label>
-                  <select value={selectedVoice} onChange={e => setSelectedVoice(e.target.value)} className="w-full bg-white/5 border border-white/20 rounded-2xl px-5 py-4 text-sm appearance-none cursor-pointer outline-none">
-                    {availableVoices.map(v => <option key={v.id} value={v.id} className="bg-slate-900">{v.name}</option>)}
-                  </select>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Linguistic Logic</label>
+                    <select value={selectedLanguage} onChange={e => setSelectedLanguage(e.target.value)} className="w-full bg-slate-900/80 border border-white/20 rounded-2xl px-5 py-4 text-xs appearance-none cursor-pointer outline-none focus:border-cyan-500">
+                      {availableLanguages.map(l => <option key={l.code} value={l.code}>{l.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Voice Synthesis</label>
+                    <select value={selectedVoice} onChange={e => setSelectedVoice(e.target.value)} className="w-full bg-slate-900/80 border border-white/20 rounded-2xl px-5 py-4 text-xs appearance-none cursor-pointer outline-none focus:border-cyan-500">
+                      {availableVoices.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -296,9 +353,9 @@ const App: React.FC = () => {
                   setSaveFeedback(true);
                   setTimeout(() => setSaveFeedback(false), 2000);
                 }} 
-                className={`w-full py-5 rounded-2xl font-black text-xs uppercase tracking-[0.4em] transition-all border ${saveFeedback ? 'bg-emerald-500 border-emerald-400 text-white' : 'bg-cyan-600/10 border-cyan-500/40 text-cyan-400'}`}
+                className={`w-full py-5 rounded-2xl font-black text-xs uppercase tracking-[0.4em] transition-all border ${saveFeedback ? 'bg-emerald-500 border-emerald-400 text-white' : 'bg-cyan-600/10 border-cyan-500/40 text-cyan-400 hover:bg-cyan-600/20'}`}
               >
-                {saveFeedback ? 'Sequence Saved' : 'Sync Matrix'}
+                {saveFeedback ? 'Sequence Locked' : 'Commit Configuration'}
               </button>
             </div>
           </div>
@@ -317,7 +374,7 @@ const App: React.FC = () => {
         />
       </div>
 
-      {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/70 backdrop-blur-md pointer-events-auto z-[55]" />}
+      {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/80 backdrop-blur-xl pointer-events-auto z-[55]" />}
     </div>
   );
 };
